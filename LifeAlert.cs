@@ -79,14 +79,17 @@ public class LifeAlert : BaseSettingsPlugin<LifeAlertSettings>
     {
         try
         {
+            int maxAttempts = 10;
             // ── Step 1: Press Escape ─────────────────────────────────────────
             if (!GameController.Game.EscapeState.IsActive)
             {
-                int maxAttempts = 5;
                 do
                 {
                     maxAttempts--;
-                    Input.KeyPressRelease(Keys.Escape);
+                    if (maxAttempts % 2 == 0)
+                    {
+                        Input.KeyPressRelease(Keys.Escape);
+                    }
                     await Task.Delay(50, ct);
                 } while (maxAttempts >= 0 && !GameController.Game.EscapeState.IsActive);
             }
@@ -125,10 +128,21 @@ public class LifeAlert : BaseSettingsPlugin<LifeAlertSettings>
             ct.ThrowIfCancellationRequested();
 
             var windowTopLeft = GameController.Window.GetWindowRectangle().TopLeft;
-            Input.SetCursorPos(windowTopLeft + element.GetClientRect().Center);
 
-            // Brief settle delay so the game registers the cursor position before the click.
-            await Task.Delay(50, ct);
+            maxAttempts = 10;
+            do
+            {
+                maxAttempts--;
+
+                Input.SetCursorPos(windowTopLeft + element.GetClientRect().Center);
+
+                // Lets break out before the sleep just to ensure the mouse doesn't move.
+                if (element.HasShinyHighlight)
+                    break;
+
+                // Brief settle delay so the game registers the cursor position before the click.
+                await Task.Delay(30, ct);
+            } while (!element.HasShinyHighlight || maxAttempts >= 0);
 
             Input.Click(MouseButtons.Left);
 
@@ -138,7 +152,7 @@ public class LifeAlert : BaseSettingsPlugin<LifeAlertSettings>
             {
                 ct.ThrowIfCancellationRequested();
 
-                if (GameController.Game.IsLoading || GameController.Game.IsSelectCharacterState)
+                if (!GameController.Game.IsLoading || GameController.Game.IsSelectCharacterState)
                     break;
 
                 await Task.Delay(100, ct);
