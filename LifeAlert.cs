@@ -45,7 +45,7 @@ public class LifeAlert : BaseSettingsPlugin<LifeAlertSettings>
     public override void Render()
     {
         if (!Settings.Enable) return;
-        if (!GameController.InGame) return;
+        if (!GameController.InGame && !GameController.IsLoading) return;
         if (IsHandlerRunning) return;
 
         try
@@ -82,7 +82,13 @@ public class LifeAlert : BaseSettingsPlugin<LifeAlertSettings>
             // ── Step 1: Press Escape ─────────────────────────────────────────
             if (!GameController.Game.EscapeState.IsActive)
             {
-                Input.KeyPressRelease(Keys.Escape);
+                int maxAttempts = 5;
+                do
+                {
+                    maxAttempts--;
+                    Input.KeyPressRelease(Keys.Escape);
+                    await Task.Delay(50, ct);
+                } while (maxAttempts >= 0 && !GameController.Game.EscapeState.IsActive);
             }
 
             // ── Step 2: Wait up to EscapeMenuWaitMs for the escape menu ─────
@@ -125,6 +131,18 @@ public class LifeAlert : BaseSettingsPlugin<LifeAlertSettings>
             await Task.Delay(50, ct);
 
             Input.Click(MouseButtons.Left);
+
+            // ── Step 3.5: Wait to finish loading or to see the screen ─────────────────
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 10000)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (GameController.Game.IsLoading || GameController.Game.IsSelectCharacterState)
+                    break;
+
+                await Task.Delay(100, ct);
+            }
 
             // ── Step 4: Wait for the character-select screen ─────────────────
             sw.Restart();
