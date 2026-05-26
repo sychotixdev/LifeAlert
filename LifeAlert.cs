@@ -46,6 +46,7 @@ public class LifeAlert : BaseSettingsPlugin<LifeAlertSettings>
     {
         if (!Settings.Enable) return;
         if (!GameController.InGame && !GameController.IsLoading) return;
+        if (Settings.DisableInSekhemas && GameController.Area.CurrentArea.Name == "Trial of the Sekhemas") return;
         if (IsHandlerRunning) return;
 
         try

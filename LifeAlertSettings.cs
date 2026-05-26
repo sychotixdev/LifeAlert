@@ -6,6 +6,7 @@ namespace LifeAlert;
 public class LifeAlertSettings : ISettings
 {
     public ToggleNode Enable { get; set; } = new(true);
+    public ToggleNode DisableInSekhemas { get; set; } = new(true);
 
     /// <summary>
     /// How long to wait (ms) after pressing Escape for the escape menu to open.
